@@ -1,0 +1,1227 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: PartyNest API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication
+  - name: businesses
+    description: Business locations
+  - name: bookings
+    description: Bookings management
+  - name: quotes
+    description: Quote requests
+  - name: messages
+    description: Messaging
+  - name: availability
+    description: Availability slots
+  - name: wishlist
+    description: Wishlist management
+  - name: crm
+    description: CRM dashboard for businesses
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /businesses:
+    get:
+      operationId: listBusinesses
+      tags: [businesses]
+      summary: List and search businesses
+      parameters:
+        - name: city
+          in: query
+          schema:
+            type: string
+        - name: lat
+          in: query
+          schema:
+            type: number
+        - name: lng
+          in: query
+          schema:
+            type: number
+        - name: radius
+          in: query
+          schema:
+            type: number
+            default: 20
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: minAge
+          in: query
+          schema:
+            type: number
+        - name: maxAge
+          in: query
+          schema:
+            type: number
+        - name: locationType
+          in: query
+          schema:
+            type: string
+            enum: [indoor, outdoor, both]
+        - name: services
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        "200":
+          description: List of businesses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessListResponse"
+
+    post:
+      operationId: createBusiness
+      tags: [businesses]
+      summary: Create a new business listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBusinessRequest"
+      responses:
+        "201":
+          description: Business created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Business"
+
+  /businesses/{id}:
+    get:
+      operationId: getBusiness
+      tags: [businesses]
+      summary: Get a business by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Business details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      operationId: updateBusiness
+      tags: [businesses]
+      summary: Update a business listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBusinessRequest"
+      responses:
+        "200":
+          description: Business updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Business"
+
+  /businesses/{id}/packages:
+    get:
+      operationId: getBusinessPackages
+      tags: [businesses]
+      summary: Get packages for a business
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of packages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Package"
+
+    post:
+      operationId: createPackage
+      tags: [businesses]
+      summary: Create a package for a business
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePackageRequest"
+      responses:
+        "201":
+          description: Package created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Package"
+
+  /businesses/{id}/packages/{packageId}:
+    put:
+      operationId: updatePackage
+      tags: [businesses]
+      summary: Update a package
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePackageRequest"
+      responses:
+        "200":
+          description: Package updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Package"
+
+    delete:
+      operationId: deletePackage
+      tags: [businesses]
+      summary: Delete a package
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Package deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /businesses/{id}/track-view:
+    post:
+      operationId: trackBusinessView
+      tags: [businesses]
+      summary: Track a business profile view
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: View tracked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /availability/{businessId}:
+    get:
+      operationId: getAvailability
+      tags: [availability]
+      summary: Get availability slots for a business
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: month
+          in: query
+          schema:
+            type: integer
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Availability slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AvailabilitySlot"
+
+    post:
+      operationId: setAvailability
+      tags: [availability]
+      summary: Set availability slot (business owner)
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetAvailabilityRequest"
+      responses:
+        "200":
+          description: Availability updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilitySlot"
+
+  /bookings:
+    get:
+      operationId: listBookings
+      tags: [bookings]
+      summary: List bookings (for current user or business)
+      parameters:
+        - name: businessId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, accepted, rejected, cancelled]
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+    post:
+      operationId: createBooking
+      tags: [bookings]
+      summary: Create a booking request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBookingRequest"
+      responses:
+        "201":
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}:
+    get:
+      operationId: getBooking
+      tags: [bookings]
+      summary: Get booking details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+    patch:
+      operationId: updateBookingStatus
+      tags: [bookings]
+      summary: Update booking status (accept/reject/cancel)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBookingStatusRequest"
+      responses:
+        "200":
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /quotes:
+    post:
+      operationId: createQuote
+      tags: [quotes]
+      summary: Submit a quote request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuoteRequest"
+      responses:
+        "201":
+          description: Quote request submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+
+    get:
+      operationId: listQuotes
+      tags: [quotes]
+      summary: List quote requests (for business)
+      parameters:
+        - name: businessId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of quotes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Quote"
+
+  /messages:
+    get:
+      operationId: listMessages
+      tags: [messages]
+      summary: List messages for a booking
+      parameters:
+        - name: bookingId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send a message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /wishlist:
+    get:
+      operationId: getWishlist
+      tags: [wishlist]
+      summary: Get user's wishlist
+      responses:
+        "200":
+          description: Wishlist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WishlistItem"
+
+    post:
+      operationId: addToWishlist
+      tags: [wishlist]
+      summary: Add a business to wishlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddWishlistRequest"
+      responses:
+        "201":
+          description: Added to wishlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WishlistItem"
+
+  /wishlist/{businessId}:
+    delete:
+      operationId: removeFromWishlist
+      tags: [wishlist]
+      summary: Remove a business from wishlist
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Removed from wishlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /crm/dashboard:
+    get:
+      operationId: getCrmDashboard
+      tags: [crm]
+      summary: Get CRM dashboard stats for a business
+      parameters:
+        - name: businessId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrmDashboard"
+
+  /crm/visibility:
+    post:
+      operationId: purchaseVisibility
+      tags: [crm]
+      summary: Purchase visibility points
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseVisibilityRequest"
+      responses:
+        "200":
+          description: Visibility points updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisibilityResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required: [error]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [parent, business, admin]
+        avatarUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, email, name, role, createdAt]
+
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [parent, business]
+      required: [email, password, name, role]
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required: [email, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        message:
+          type: string
+      required: [user]
+
+    Business:
+      type: object
+      properties:
+        id:
+          type: string
+        ownerId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        city:
+          type: string
+        address:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        locationType:
+          type: string
+          enum: [indoor, outdoor, both]
+        minAge:
+          type: integer
+        maxAge:
+          type: integer
+        capacity:
+          type: integer
+        basePrice:
+          type: number
+        photos:
+          type: array
+          items:
+            type: string
+        services:
+          type: array
+          items:
+            type: string
+        rules:
+          type: string
+        phone:
+          type: string
+        website:
+          type: string
+        visibilityPoints:
+          type: integer
+        views:
+          type: integer
+        rating:
+          type: number
+        reviewCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, ownerId, name, city, address, locationType, capacity, basePrice, createdAt]
+
+    BusinessDetail:
+      allOf:
+        - $ref: "#/components/schemas/Business"
+        - type: object
+          properties:
+            packages:
+              type: array
+              items:
+                $ref: "#/components/schemas/Package"
+            isWishlisted:
+              type: boolean
+
+    BusinessListResponse:
+      type: object
+      properties:
+        businesses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Business"
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      required: [businesses, total, page, totalPages]
+
+    CreateBusinessRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        city:
+          type: string
+        address:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        locationType:
+          type: string
+          enum: [indoor, outdoor, both]
+        minAge:
+          type: integer
+        maxAge:
+          type: integer
+        capacity:
+          type: integer
+        basePrice:
+          type: number
+        photos:
+          type: array
+          items:
+            type: string
+        services:
+          type: array
+          items:
+            type: string
+        rules:
+          type: string
+        phone:
+          type: string
+        website:
+          type: string
+      required: [name, city, address, locationType, capacity, basePrice]
+
+    Package:
+      type: object
+      properties:
+        id:
+          type: string
+        businessId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        priceWeekend:
+          type: number
+        maxGuests:
+          type: integer
+        duration:
+          type: integer
+        includes:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+      required: [id, businessId, name, price, maxGuests, duration]
+
+    CreatePackageRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        priceWeekend:
+          type: number
+        maxGuests:
+          type: integer
+        duration:
+          type: integer
+        includes:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+      required: [name, price, maxGuests, duration]
+
+    AvailabilitySlot:
+      type: object
+      properties:
+        id:
+          type: string
+        businessId:
+          type: string
+        date:
+          type: string
+          format: date
+        timeSlot:
+          type: string
+          enum: [morning, afternoon, evening]
+        isAvailable:
+          type: boolean
+        isBlocked:
+          type: boolean
+        note:
+          type: string
+      required: [id, businessId, date, timeSlot, isAvailable]
+
+    SetAvailabilityRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        timeSlot:
+          type: string
+          enum: [morning, afternoon, evening]
+        isAvailable:
+          type: boolean
+        isBlocked:
+          type: boolean
+        note:
+          type: string
+      required: [date, timeSlot]
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        businessId:
+          type: string
+        packageId:
+          type: string
+        date:
+          type: string
+          format: date
+        timeSlot:
+          type: string
+          enum: [morning, afternoon, evening]
+        guestCount:
+          type: integer
+        childrenAge:
+          type: string
+        notes:
+          type: string
+        parentName:
+          type: string
+        parentEmail:
+          type: string
+        parentPhone:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected, cancelled]
+        totalPrice:
+          type: number
+        business:
+          $ref: "#/components/schemas/Business"
+        package:
+          $ref: "#/components/schemas/Package"
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, businessId, date, timeSlot, guestCount, parentName, parentEmail, parentPhone, status, createdAt]
+
+    CreateBookingRequest:
+      type: object
+      properties:
+        businessId:
+          type: string
+        packageId:
+          type: string
+        date:
+          type: string
+          format: date
+        timeSlot:
+          type: string
+          enum: [morning, afternoon, evening]
+        guestCount:
+          type: integer
+        childrenAge:
+          type: string
+        notes:
+          type: string
+        parentName:
+          type: string
+        parentEmail:
+          type: string
+        parentPhone:
+          type: string
+        totalPrice:
+          type: number
+      required: [businessId, date, timeSlot, guestCount, parentName, parentEmail, parentPhone]
+
+    UpdateBookingStatusRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted, rejected, cancelled]
+        note:
+          type: string
+      required: [status]
+
+    Quote:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        businessId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        eventDate:
+          type: string
+          format: date
+        guestCount:
+          type: integer
+        childrenAge:
+          type: string
+        message:
+          type: string
+        services:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [pending, responded, closed]
+        business:
+          $ref: "#/components/schemas/Business"
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, businessId, name, email, guestCount, status, createdAt]
+
+    CreateQuoteRequest:
+      type: object
+      properties:
+        businessId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        eventDate:
+          type: string
+          format: date
+        guestCount:
+          type: integer
+        childrenAge:
+          type: string
+        message:
+          type: string
+        services:
+          type: array
+          items:
+            type: string
+      required: [businessId, name, email, guestCount]
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        bookingId:
+          type: string
+        senderId:
+          type: string
+        senderName:
+          type: string
+        senderRole:
+          type: string
+          enum: [parent, business]
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, bookingId, senderId, senderName, senderRole, content, createdAt]
+
+    SendMessageRequest:
+      type: object
+      properties:
+        bookingId:
+          type: string
+        content:
+          type: string
+      required: [bookingId, content]
+
+    WishlistItem:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        businessId:
+          type: string
+        business:
+          $ref: "#/components/schemas/Business"
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, businessId, createdAt]
+
+    AddWishlistRequest:
+      type: object
+      properties:
+        businessId:
+          type: string
+      required: [businessId]
+
+    CrmDashboard:
+      type: object
+      properties:
+        totalBookings:
+          type: integer
+        pendingBookings:
+          type: integer
+        acceptedBookings:
+          type: integer
+        totalViews:
+          type: integer
+        totalQuotes:
+          type: integer
+        visibilityPoints:
+          type: integer
+        recentBookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Booking"
+        recentQuotes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Quote"
+        monthlyStats:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlyStat"
+      required: [totalBookings, pendingBookings, acceptedBookings, totalViews, totalQuotes, visibilityPoints, recentBookings, recentQuotes, monthlyStats]
+
+    MonthlyStat:
+      type: object
+      properties:
+        month:
+          type: string
+        bookings:
+          type: integer
+        views:
+          type: integer
+      required: [month, bookings, views]
+
+    PurchaseVisibilityRequest:
+      type: object
+      properties:
+        businessId:
+          type: string
+        points:
+          type: integer
+      required: [businessId, points]
+
+    VisibilityResponse:
+      type: object
+      properties:
+        visibilityPoints:
+          type: integer
+        message:
+          type: string
+      required: [visibilityPoints]

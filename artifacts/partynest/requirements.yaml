@@ -1,0 +1,22 @@
+packages:
+  "framer-motion": "For elegant page transitions and UI animations"
+  "react-leaflet": "For the interactive venue map"
+  "leaflet": "Core map library"
+  "@types/leaflet": "Types for leaflet"
+  "recharts": "For the CRM dashboard analytics"
+  "date-fns": "For formatting event dates and availability"
+  "react-hook-form": "For robust form state management"
+  "@hookform/resolvers": "For Zod form validation"
+
+images:
+  - path: "artifacts/partynest/public/images/hero-bg.png"
+    description: "Elegant, warm, festive children's party setting with balloons and soft lighting, professional yet inviting, abstract blur in the background, coral and peach tones"
+    aspect_ratio: "16:9"
+  - path: "artifacts/partynest/public/images/logo.png"
+    description: "Minimalist modern logo for 'PartyNest' with a subtle abstract balloon or nest icon, warm pink and coral colors, transparent background"
+    aspect_ratio: "1:1"
+
+notes:
+  - Authentication relies on the provided OpenAPI client hooks and session cookies
+  - The business ID for CRM routes is derived by matching the authenticated user's ID to the business ownerId
+  - UI components from @/components/ui are assumed to exist based on the directory structure provided
